@@ -1,0 +1,22 @@
+import numpy as np
+from sklearn.linear_model import Perceptron
+from sklearn.metrics import accuracy_score
+
+# Define datasets for OR, AND, and XOR logic gates
+datasets = {
+    "OR": (np.array([[0, 0], [0, 1], [1, 0], [1, 1]]), np.array([0, 1, 1, 1])),
+    "AND": (np.array([[0, 0], [0, 1], [1, 0], [1, 1]]), np.array([0, 0, 0, 1])),
+    "XOR": (np.array([[0, 0], [0, 1], [1, 0], [1, 1]]), np.array([0, 1, 1, 0]))
+}
+
+# Initialize Perceptron model
+model = Perceptron(max_iter=1000, tol=1e-3)
+
+# Train and evaluate the perceptron on each dataset
+for gate, (X, y) in datasets.items():
+    model.fit(X, y)
+    predictions = model.predict(X)
+    accuracy = accuracy_score(y, predictions)
+    
+    print(f"{gate} Gate - Accuracy: {accuracy}")
+    print(f"Predictions: {predictions}, True Labels: {y}\n")
