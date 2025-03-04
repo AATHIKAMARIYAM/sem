@@ -1,0 +1,56 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+from torchvision.utils import save_image
+
+z_dim, img_size, batch_size, epochs = 100, 64, 32, 50
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+G = nn.Sequential(
+    nn.Linear(z_dim, 512),
+    nn.ReLU(),
+    nn.Linear(512, img_size * img_size * 3),
+    nn.Tanh()
+)
+
+D = nn.Sequential(
+    nn.Flatten(),
+    nn.Linear(img_size * img_size * 3, 512),
+    nn.LeakyReLU(0.2),
+    nn.Linear(512, 1),
+    nn.Sigmoid()
+)
+
+G, D = G.to(device), D.to(device)
+
+opt_G = optim.Adam(G.parameters(), 0.0002)
+opt_D = optim.Adam(D.parameters(), 0.0002)
+criterion = nn.BCELoss()
+
+for epoch in range(epochs):
+    real = torch.randn(batch_size, 3, img_size, img_size, device=device)
+    z = torch.randn(batch_size, z_dim, device=device)
+    fake = G(z)
+
+    loss_D = criterion(D(real.view(batch_size, -1)), torch.ones(batch_size, 1, device=device)) + \
+             criterion(D(fake.detach()), torch.zeros(batch_size, 1, device=device))
+
+    opt_D.zero_grad()
+    loss_D.backward()
+    opt_D.step()
+
+    loss_G = criterion(D(fake), torch.ones(batch_size, 1, device=device))
+
+    opt_G.zero_grad()
+    loss_G.backward()
+    opt_G.step()
+
+    print(f"Epoch [{epoch+1}/{epochs}] Loss D: {loss_D.item():.4f}, Loss G: {loss_G.item():.4f}")
+
+    if epoch % 10 == 0:
+        fake_images = fake.view(batch_size, 3, img_size, img_size).cpu().detach()
+        save_image(fake_images[:25], f"generated_{epoch}.png", normalize=True)
+        plt.imshow((fake_images[0].permute(1, 2, 0).numpy() + 1) / 2)
+        plt.axis("off")
+        plt.show()
