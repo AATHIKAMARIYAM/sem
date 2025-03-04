@@ -1,0 +1,60 @@
+# Importing the TensorFlow library for building the model
+import tensorflow as tf
+# Importing matplotlib for visualizing images and results
+import matplotlib.pyplot as plt
+# Importing TensorFlow Datasets to load datasets easily
+import tensorflow_datasets as tfds
+
+# Load the Stanford Dogs dataset from TensorFlow Datasets
+# 'as_supervised=True' means the data will be returned as (image, label) pairs
+# 'with_info=True' provides additional information about the dataset (like class names)
+dataset, info = tfds.load('stanford_dogs', as_supervised=True, with_info=True)
+
+# Define a preprocessing function to resize and normalize images
+def preprocess(image, label):
+    # Resize images to 32x32 pixels and normalize pixel values to [0, 1]
+    return tf.image.resize(image, (32, 32)) / 255.0, label  # Resize and normalize # This line was not indented correctly.
+
+# Apply the preprocessing function and batch the training data into batches of 32
+train_data = dataset['train'].map(preprocess).batch(32)
+# Apply the preprocessing function and batch the testing data into batches of 32
+test_data = dataset['test'].map(preprocess).batch(32)
+# Define a Sequential model consisting of multiple layers
+model = tf.keras.Sequential([
+    # First Convolutional layer with 32 filters and 3x3 kernel size, ReLU activation
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    # MaxPooling layer with 2x2 pool size to downsample feature maps
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    # Second Convolutional layer with 64 filters and 3x3 kernel size, ReLU activation
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    # MaxPooling layer with 2x2 pool size
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    # Flatten the 2D feature map into a 1D vector
+    tf.keras.layers.Flatten(),
+    # Dense layer with 64 neurons and ReLU activation
+    tf.keras.layers.Dense(64, activation='relu'),
+    # Output layer with neurons equal to the number of classes (softmax for multi-class classification)
+    tf.keras.layers.Dense(info.features['label'].num_classes, activation='softmax')
+])
+# Compile the model specifying the optimizer, loss function, and evaluation metric
+model.compile(optimizer='adam',  # Adam optimizer is used
+              loss='sparse_categorical_crossentropy',  # Loss function for multi-class classification
+              metrics=['accuracy'])  # We track accuracy during training
+# Train the model for 3 epochs using the training data
+model.fit(train_data, epochs=3)
+# Get the first batch of test data (32 images and labels)
+image, label = next(iter(test_data))  # Take first image
+# Use the trained model to predict the class for the first image
+prediction = model.predict(image)  # Predict class
+# Extract the predicted class by finding the index with the highest probability
+predicted_class = tf.argmax(prediction[0]).numpy()
+# Extract the actual class label from the test data
+actual_class = label[0].numpy()
+# Plot the first image from the batch
+plt.imshow(image[0])
+# Set the plot title to show predicted and actual class labels
+plt.title(f"Pred: {info.features['label'].names[predicted_class]}, Actual: {info.features['label'].names[actual_class]}")
+# Turn off the axis to focus only on the image
+plt.axis('off')
+# Display the image
+plt.show()
