@@ -1,0 +1,28 @@
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+# Set device to GPU if available, else use CPU
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment")
+model = AutoModelForSequenceClassification.from_pretrained("nlptown/bert-base-multilingual-uncased-sentiment").to(device)
+
+def predict_review(review):
+    # Tokenize input review and move tensors to the correct device
+    enc = tokenizer(review, return_tensors='pt', truncation=True, padding=True).to(device)
+
+    # Perform inference
+    with torch.no_grad():
+        output = model(**enc).logits.softmax(dim=1)
+   
+    # Get sentiment prediction
+    sentiment = output.argmax().item()
+    labels = ["Very Negative", "Negative", "Neutral", "Positive", "Very Positive"]
+   
+    # Print the predicted sentiment
+    print(f"Sentiment: {labels[sentiment]}")
+
+# Get user input and predict sentiment
+review = input("Enter a review: ")
+predict_review(review)
