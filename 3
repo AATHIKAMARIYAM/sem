@@ -1,0 +1,55 @@
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import numpy as np
+from cifar_utils import get_classes, get_super_classes, image_data
+
+# Load CIFAR-100 dataset
+(train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.cifar100.load_data()
+
+# Normalize the images to be between 0 and 1 (for model compatibility)
+train_images = train_images.astype('float32') / 255.0
+test_images = test_images.astype('float32') / 255.0
+
+# Use your function to get CIFAR-100 class names
+class_names = get_classes()
+
+# Build a simple CNN model using the Sequential API
+model = tf.keras.Sequential([
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(100, activation='softmax')  # 100 classes for CIFAR-100
+])
+
+# Compile the model
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+
+# Train the model
+model.fit(train_images, train_labels, epochs=2)
+
+# Evaluate the model
+test_loss, test_acc = model.evaluate(test_images, test_labels, verbose=2)
+print(f"Test accuracy: {test_acc}")
+
+# Select a test image to classify (for example, the 5th test image)
+img = test_images[4]
+img_label = test_labels[4]
+
+# Reshape and normalize the image for prediction
+img_input = np.expand_dims(img, axis=0)  # Add batch dimension
+
+# Predict the class of the image
+predictions = model.predict(img_input)
+predicted_class_idx = np.argmax(predictions)  # Get the index of the predicted class
+predicted_class_name = class_names[predicted_class_idx]  # Get the class name using get_classes function
+
+# Show the image with the predicted class as the title
+plt.imshow(img)
+plt.title(f'Predicted: {predicted_class_name}')  # Display the predicted class as the title
+plt.show()
