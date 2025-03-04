@@ -1,0 +1,48 @@
+import tensorflow as tf
+import tensorflow_datasets as tfds
+import matplotlib.pyplot as plt
+
+dataset, info = tfds.load('oxford_flowers102', as_supervised=True, with_info=True)
+
+IMG_SIZE = 128  
+
+def preprocess_image(image, label): 
+    image = tf.image.resize(image, (IMG_SIZE, IMG_SIZE)) 
+    image = image / 255.0 
+    return image, image 
+
+train_data = dataset['train'].map(preprocess_image).batch(32).prefetch(tf.data.AUTOTUNE) 
+test_data = dataset['test'].map(preprocess_image).batch(32).prefetch(tf.data.AUTOTUNE) 
+
+autoencoder = tf.keras.Sequential([
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', padding='same', input_shape=(IMG_SIZE, IMG_SIZE, 3)), 
+    tf.keras.layers.MaxPooling2D((2, 2), padding='same'), 
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu', padding='same'), 
+    tf.keras.layers.MaxPooling2D((2, 2), padding='same'), 
+    tf.keras.layers.Conv2D(128, (3, 3), activation='relu', padding='same'), 
+    tf.keras.layers.MaxPooling2D((2, 2), padding='same'), 
+
+    tf.keras.layers.Conv2DTranspose(128, (3, 3), activation='relu', padding='same'), 
+    tf.keras.layers.UpSampling2D((2, 2)), 
+    tf.keras.layers.Conv2DTranspose(64, (3, 3), activation='relu', padding='same'), 
+    tf.keras.layers.UpSampling2D((2, 2)), 
+    tf.keras.layers.Conv2DTranspose(32, (3, 3), activation='relu', padding='same'), 
+    tf.keras.layers.UpSampling2D((2, 2)), 
+    tf.keras.layers.Conv2DTranspose(3, (3, 3), activation='sigmoid', padding='same') 
+]) 
+
+autoencoder.compile(optimizer='adam', loss='binary_crossentropy') 
+autoencoder.fit(train_data, epochs=1, validation_data=test_data) 
+
+original_image = next(iter(test_data))[0][0] 
+reconstructed_image = autoencoder.predict(original_image[None, ...])  
+
+plt.subplot(1, 2, 1) 
+plt.imshow(original_image) 
+plt.title("Original") 
+
+plt.subplot(1, 2, 2) 
+plt.imshow(reconstructed_image[0])  
+plt.title("Reconstructed") 
+
+plt.show()
