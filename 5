@@ -1,0 +1,28 @@
+import numpy as np 
+from tensorflow.keras.models import Sequential 
+from tensorflow.keras.layers import SimpleRNN, Dense 
+# Get sequence from user 
+sequence = input("Enter a sequence of numbers separated by commas: ") 
+sequence = np.array([int(num) for num in sequence.split(',')]) 
+# Normalize the sequence 
+data_min = sequence.min() 
+data_max = sequence.max() 
+normalized_sequence = (sequence - data_min) / (data_max - data_min) 
+# Prepare the data for the RNN 
+X = normalized_sequence[:-1].reshape(-1, 1, 1)  # Input shape: (samples, timesteps, features) 
+y = normalized_sequence[1:]  # Target is next number in the sequence 
+# Define the RNN model 
+model = Sequential([ 
+SimpleRNN(10, activation='relu', input_shape=(1, 1)), 
+Dense(1) 
+]) 
+model.compile(optimizer='adam', loss='mse') 
+# Train the model 
+model.fit(X, y, epochs=100, verbose=0) 
+# Get input from user to predict the next number 
+last_number = float(input("Enter the last number in the sequence to predict the next: ")) 
+normalized_last_number = (last_number - data_min) / (data_max - data_min) 
+input_sequence = np.array([normalized_last_number]).reshape(1, 1, 1) 
+normalized_next_number = model.predict(input_sequence)[0][0] 
+next_number = normalized_next_number * (data_max - data_min) + data_min 
+print(f"The next number after {last_number} is: {next_number:.2f}")
