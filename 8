@@ -1,0 +1,36 @@
+# Import TensorFlow for data processing and model development 
+import tensorflow as tf 
+# Import Matplotlib for visualizing images 
+import matplotlib.pyplot as plt 
+# Import ImageDataGenerator from Keras for image augmentation 
+from tensorflow.keras.preprocessing.image import ImageDataGenerator 
+# Load CIFAR-10 dataset (already included in TensorFlow) 
+# CIFAR-10 contains 60,000 32x32 color images in 10 classes 
+(X_train, y_train), (X_test, y_test) = tf.keras.datasets.cifar10.load_data() 
+# Select the first image from the training dataset for demonstration 
+original_image = X_train[0] 
+# Reshape the image to add a batch dimension (required by ImageDataGenerator) 
+# Input shape must be (batch_size, height, width, channels) 
+image = original_image.reshape((1, 32, 32, 3)) 
+#Create an ImageDataGenerator object to define augmentation transformations 
+datagen = ImageDataGenerator( 
+rotation_range=50,       
+# Randomly rotate images within a range of degrees 
+zoom_range=0.2,          
+vertical_flip=True     
+) 
+# Randomly zoom in or out up to 20% 
+# Randomly flip the image vertically 
+# Fit the data generator to the image (necessary when using data augmentation) 
+datagen.fit(image) 
+plt.imshow(original_image)    # Display the original image 
+plt.title("Original Image (Index 0)")  # Add a title to the plot 
+plt.axis('off')               
+# Remove axes for better visualization 
+augmented_images = datagen.flow(image)  # Create a generator 
+augmented_image = next(augmented_images)[0] 
+plt.imshow(augmented_image.astype('uint8'))    # Display the augmented image 
+plt.title("Augmented Image (Index 0)")  # Add a title to the plot 
+plt.axis('off')                
+# Remove axes for better visualization 
+plt.show()
