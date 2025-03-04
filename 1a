@@ -1,0 +1,37 @@
+# Import necessary libraries
+import numpy as np
+from sklearn.linear_model import Perceptron
+import matplotlib.pyplot as plt
+
+# Generate a linearly separable binary dataset
+# Class 1: centered at (2, 2), Class 0: centered at (6, 6)
+np.random.seed(42)  # For reproducibility
+class_0 = np.random.randn(50, 2) + [6, 6]
+class_1 = np.random.randn(50, 2) + [2, 2]
+
+# Combine data and create labels
+X = np.vstack((class_0, class_1))
+y = np.hstack((np.zeros(50), np.ones(50)))
+
+# Train a Perceptron model
+model = Perceptron(max_iter=1000, tol=1e-3)
+model.fit(X, y)
+
+# Print model coefficients and intercept
+print("Weights:", model.coef_)
+print("Bias:", model.intercept_)
+
+# Plot the dataset and decision boundary
+plt.scatter(X[:50, 0], X[:50, 1], color='red', label='Class 0')
+plt.scatter(X[50:, 0], X[50:, 1], color='blue', label='Class 1')
+
+# Decision boundary: w0*x + w1*y + b = 0
+x_vals = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+y_vals = -(model.coef_[0][0] * x_vals + model.intercept_) / model.coef_[0][1]
+
+plt.plot(x_vals, y_vals, color='green', label='Decision Boundary')
+plt.legend()
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("Perceptron Classification")
+plt.show()
